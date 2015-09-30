@@ -1,6 +1,6 @@
-server=
-dbName=
-dbConn=
-user=
-password=
-prdId=
+server=IP:PORT
+dbName=DB NAME
+dbConn=Connection String
+user=Username
+password=Password
+prdId=Product ID
