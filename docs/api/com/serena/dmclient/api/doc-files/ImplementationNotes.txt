@@ -1,0 +1,89 @@
+******************************************
+* DMClient, DMPMCLI Implementation Notes *
+******************************************
+
+Admininstration Scripts
+=======================
+Most admin implementation objects that reside in the api package have had their visiblity reduced from
+public to package level. As a result of this, certain admin methods that returned collections of objects
+as a java.util.List needed to be converted to return dmpmcli collection objects. There follows a list of
+those methods that have been changed;
+
+ItemType.getAssignedFormats() now returns an object of type FileFormats
+ItemType.getRelationshipTypes now returns an object of type ItemToItemRelationshipTypes
+RelationshipName.getRelationshipTypes() now returns an object of type ItemToItemRelationshipTypes
+AttributeBlock.getBlockAttributes() now returns an object of type AttributeDefinitions
+BaselineTemplate.getBaselines() now returns an object of type Baselines
+BuildProject.getProjects() now returns an object of type Projects
+BuildStage.getLifecycleStates now returns an object of type LifecycleStates
+ChangeDocumentType.getAssignments() now returns an object of type LifecycleTemplateAssignments
+ChangeDocumentType.getPrimingRelationships() now returns an object of type PrimingRelationships
+
+As a result of the above changes, admin scripts that access these methods and iterate over the resulting
+list will need to change. For example;
+
+***THE OLD WAY***
+//get file formats
+var formats = itemType.assignedFormats
+
+// loop over file formats
+for (it = formats.iterator(); it.hasNext(); )
+{
+    // get next format
+    var fmt = it.next()
+
+    // ...do other stuff...
+}
+
+
+***THE NEW WAY***
+//get file formats
+var formats = itemType.assignedFormats
+
+// loop over file formats
+for (it = formats.iterator(); it.hasNext(); )
+{
+    // get next format
+    var fmtName = it.next()
+    var fmt = formats.get(fmtName)
+
+    // ...do other stuff...
+}
+
+Also, changes have been made to the way the base database is accessed from an admin script. This means
+that scrips that used to call BaseDatabase.instance to get a reference to a base database should now
+just use the for-free variable 'defaultDatabase'.
+
+=======================================================================================================
+
+MultiThreaded Clients
+=====================
+Registration of Threads to Connections
+--------------------------------------
+The Darius component on which dmclient relies to enable it to talk to a Dimensions server requires that 
+the calling thread be registered to the Darius session. This restriction is also enforced at a higher level
+in dmclient such that the calling thread must be registered to the DimensionsConnection object. It is the 
+intention of the dmclient API that this detail be transparent to the consumer.
+
+For single threaded clients this would not normally be an issue because the thread that creates the connection
+and obtains references to business objects would also be the thread that performs business operations that
+need to go through Darius. In a multi threaded client, several threads may share a reference to the same
+business object and unless the calling thread is registered with the connection from which the business
+object in question was created, an error will occur.
+
+DMClient alleviates these problems by;
+1/ ensuring every business object remembers the connection from which it was obtained and
+2/ automatically registering the calling thread to the connection from which the business object in question
+   was obtained. this is done for those business methods that could potentially require access to the underlying
+   Darius layer.
+
+Lost Updates
+------------
+The DMClient API will not handle situations that might give rise to lost updates occurring. It is the responsibility
+of API consumers to ensure that threads they initiate collaborate to avoid such problems.
+
+Deadlock
+--------
+The DMClient API will not prevent the possibility of deadlocks occurring between consumer-initiated threads.
+It is the responsibility of API consumers to ensure that threads they initiate collaborate to avoid such problems.
+
