@@ -85,10 +85,6 @@ public class AttributeHelper {
 		SystemAttributes.VARIANT
 	};
 	
-	public static int[] getProjectAttrs() {
-		return projectAttrs;
-	}
-
 	public static void queryProjectAttributes(DimensionsConnection conn, List<Project> objects) {
 		BulkOperator bulk = conn.getObjectFactory().getBulkOperator(objects);
 		bulk.queryAttribute(projectAttrs);
